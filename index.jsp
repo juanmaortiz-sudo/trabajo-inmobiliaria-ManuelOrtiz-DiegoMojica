@@ -14,11 +14,12 @@
 
 <body>
 
-<%-- Se incluye la lógica de conexión --%>
 <%@ include file="conexion.jspf" %>
 
 <%
     Integer idUsuarioSesion = (Integer) session.getAttribute("id_usuario");
+    String rolSesion = (String) session.getAttribute("rol");
+    boolean esInmobiliaria = "inmobiliaria".equalsIgnoreCase(rolSesion);
     String perfilNombres = null;
     String perfilApellidos = null;
     String perfilDocumento = null;
@@ -61,7 +62,9 @@
                     <li class="nav-item"><a class="nav-link" href="#caracteristicas">Características</a></li>
                     <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
 <%              if (idUsuarioSesion != null) { %>
+                    <% if (esInmobiliaria) { %>
                     <li class="nav-item"><a class="nav-link" href="propiedades.jsp">Propiedades</a></li>
+                    <% } %>
                     <li class="nav-item"><a class="nav-link" href="completar_registro.jsp">Mi perfil</a></li>
                     <li class="nav-item"><a class="nav-link" href="cerrar_sesion.jsp">Cerrar Sesión</a></li>
 <%              } else { %>
@@ -92,7 +95,10 @@
                         <li class="list-group-item d-flex justify-content-between"><span>Apellido:</span><strong><%= perfilApellidos != null ? perfilApellidos : "---" %></strong></li>
                         <li class="list-group-item d-flex justify-content-between"><span>Teléfono:</span><strong><%= perfilTelefono != null ? perfilTelefono : "---" %></strong></li>
                     </ul>
-                    <a class="btn btn-success btn-lg mt-4" href="completar_registro.jsp">Completar / Editar perfil</a>
+                    <div class="mt-4">
+                        <a class="btn btn-success btn-lg mr-2" href="completar_registro.jsp">Completar / Editar perfil</a>
+                        <a class="btn btn-outline-primary btn-lg" href="propiedades.jsp"><i class="fas fa-home"></i> Ver Propiedades</a>
+                    </div>
                 </div>
             </div>
 <%
@@ -100,7 +106,10 @@
 %>
             <h1 class="display-4">Bienvenido a tu plataforma inmobiliaria</h1>
             <p class="lead">Gestión de propiedades, citas, solicitudes y usuarios en un solo lugar.</p>
-            <a class="btn btn-success btn-lg" href="registro.jsp">Crear cuenta</a>
+            <div class="mt-3">
+                <a class="btn btn-success btn-lg mr-2" href="registro.jsp">Crear cuenta</a>
+                <a class="btn btn-outline-primary btn-lg" href="propiedades.jsp"><i class="fas fa-home"></i> Ver Propiedades</a>
+            </div>
 <%
         }
 %>
