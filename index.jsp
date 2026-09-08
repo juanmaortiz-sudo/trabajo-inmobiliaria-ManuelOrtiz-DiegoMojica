@@ -61,6 +61,7 @@
                     <li class="nav-item"><a class="nav-link" href="#caracteristicas">Características</a></li>
                     <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
 <%              if (idUsuarioSesion != null) { %>
+                    <li class="nav-item"><a class="nav-link" href="propiedades.jsp">Propiedades</a></li>
                     <li class="nav-item"><a class="nav-link" href="completar_registro.jsp">Mi perfil</a></li>
                     <li class="nav-item"><a class="nav-link" href="cerrar_sesion.jsp">Cerrar Sesión</a></li>
 <%              } else { %>

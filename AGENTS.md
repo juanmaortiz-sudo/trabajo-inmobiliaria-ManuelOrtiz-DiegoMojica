@@ -32,9 +32,17 @@ and served by Tomcat at runtime.
 
 ## Database schema (full)
 The SQL dump defines 16 tables. Auth-relevant: `usuario`, `rol`, `usuario_rol`, `perfil`.
-Domain tables (not yet wired in JSPs): `propiedad`, `ciudad`, `tipo_propiedad`, `inmobiliaria`,
-`caracteristica`, `propiedad_caracteristica`, `imagen_propiedad`, `solicitud`, `documento_solicitud`,
-`cita`, `favorito`, `auditoria`.
+Domain tables (now wired in JSPs): `propiedad`, `ciudad`, `tipo_propiedad`, `inmobiliaria`,
+`caracteristica`, `propiedad_caracteristica`, `imagen_propiedad`.
+Other domain tables (not yet wired): `solicitud`, `documento_solicitud`, `cita`, `favorito`, `auditoria`.
+
+## Property CRUD (new)
+- `propiedades.jsp` — list with filters, links to create/view/edit/delete
+- `propiedad_nueva.jsp` — create property with images (1:N via `imagen_propiedad`) and characteristics (N:M via `propiedad_caracteristica`); manual multipart parsing like `completar_registro.jsp`
+- `propiedad_ver.jsp` — detail view with carousel for images, characteristics grid
+- `propiedad_editar.jsp` — edit property, replace/delete images, update characteristics
+- `propiedad_eliminar.jsp` — soft delete (sets `baja_logica=1`), removes images/files and relations
+- All property pages require login (session `id_usuario`), use `conexion.jspf`, follow same patterns as auth pages
 
 ## Gotchas
 - `assets/css/style.css` is referenced in the `<head>` of every page, but no `assets/` folder exists — it 404s silently. Bootstrap 4.6 and Font Awesome 5.15 come from CDN, not vendored.
