@@ -159,7 +159,7 @@
                     ResultSet rsRoles = null;
                     try {
                         stmtRoles = conexion.createStatement();
-                        rsRoles = stmtRoles.executeQuery("SELECT id_rol, nombre FROM rol WHERE LOWER(nombre) <> 'administrador'");
+                        rsRoles = stmtRoles.executeQuery("SELECT id_rol, nombre FROM rol WHERE LOWER(nombre) NOT IN ('administrador', 'visitante')");
                         while (rsRoles.next()) {
                             out.println("<option value='" + rsRoles.getInt("id_rol") + "'>" + rsRoles.getString("nombre") + "</option>");
                         }
