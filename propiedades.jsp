@@ -48,7 +48,9 @@
             <div class="collapse navbar-collapse" id="barraNavegacion">
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item"><a class="nav-link" href="index.jsp">Inicio</a></li>
+                    <% if (esInmobiliaria) { %>
                     <li class="nav-item active"><a class="nav-link" href="propiedades.jsp">Propiedades</a></li>
+                    <% } %>
                     <li class="nav-item"><a class="nav-link" href="completar_registro.jsp">Mi perfil</a></li>
                     <li class="nav-item"><a class="nav-link" href="cerrar_sesion.jsp">Cerrar Sesión</a></li>
                 </ul>
