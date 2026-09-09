@@ -1,0 +1,35 @@
+<%@ include file="auth.jspf" %>
+<nav class="navbar navbar-expand-lg navbar-dark bg-success">
+    <div class="container">
+        <a class="navbar-brand" href="<%= request.getContextPath() %>/index.jsp">Inmobiliaria</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#barraNavegacion"
+            aria-controls="barraNavegacion" aria-expanded="false" aria-label="Alternar navegación">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="barraNavegacion">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/index.jsp">Inicio</a></li>
+                
+                <% if (autenticado) { %>
+                    <% if (esAdmin) { %>
+                        <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/admin_usuarios.jsp">Admin Usuarios</a></li>
+                        <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/admin_solicitudes.jsp">Solicitudes</a></li>
+                    <% } %>
+                    <% if (esInmob) { %>
+                        <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/propiedades.jsp">Propiedades</a></li>
+                        <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/propiedad_nueva.jsp">Nueva Propiedad</a></li>
+                    <% } %>
+                    <% if (esCliente || esInmob) { %>
+                        <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/propiedades.jsp">Ver Propiedades</a></li>
+                        <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/solicitar_inmobiliaria.jsp">Ser Inmobiliaria</a></li>
+                    <% } %>
+                    <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/completar_registro.jsp">Mi Perfil</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/cerrar_sesion.jsp">Cerrar Sesión</a></li>
+                <% } else { %>
+                    <li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/login.jsp">Iniciar Sesión</a></li>
+                    <li class="nav-item"><a class="btn btn-light btn-sm ml-2 my-1" href="<%= request.getContextPath() %>/registro.jsp">Registrarse</a></li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+</nav>

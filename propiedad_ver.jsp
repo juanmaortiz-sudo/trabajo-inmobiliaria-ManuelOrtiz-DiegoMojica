@@ -2,6 +2,26 @@
 <%@ page import="java.sql.PreparedStatement"%>
 <%@ page import="java.sql.ResultSet"%>
 <%@ page import="java.sql.SQLException"%>
+<%@ include file="conexion.jspf" %>
+<%@ include file="auth.jspf" %>
+
+<%
+// Guardia: requiere autenticación
+if (!autenticado) {
+    response.sendRedirect(request.getContextPath() + "/login.jsp");
+    return;
+}
+
+String idParam = request.getParameter("id");
+int idPropiedad = 0;
+try { idPropiedad = Integer.parseInt(idParam); } catch (NumberFormatException e) { idPropiedad = 0; }
+
+if (idPropiedad == 0) {
+    response.sendRedirect(request.getContextPath() + "/propiedades.jsp");
+    return;
+}
+%>
+
 <!DOCTYPE html>
 <html lang="es">
 
@@ -17,26 +37,15 @@
 
 <body>
 
-<%@ include file="conexion.jspf" %>
+<!-- Navbar unificado -->
+<%@ include file="navbar.jspf" %>
 
 <%
-    Integer idUsuarioSesion = (Integer) session.getAttribute("id_usuario");
-    String rolSesion = (String) session.getAttribute("rol");
-    boolean esInmobiliaria = "inmobiliaria".equalsIgnoreCase(rolSesion);
-
-    if (idUsuarioSesion == null) {
-        response.sendRedirect("login.jsp");
-        return;
-    }
-
-    String idParam = request.getParameter("id");
-    int idPropiedad = 0;
-    try { idPropiedad = Integer.parseInt(idParam); } catch (NumberFormatException e) { idPropiedad = 0; }
-
     String titulo = "", descripcion = "", precio = "", tipoOferta = "", estadoPublicacion = "", direccion = "";
     String ciudad = "", tipoPropiedad = "", inmobiliaria = "", matricula = "";
     java.util.List<String> imagenes = new java.util.ArrayList<>();
     java.util.Map<String, String> caracteristicas = new java.util.LinkedHashMap<>();
+    int idInmobProp = 0;
 
     if (conexion != null && idPropiedad > 0) {
         PreparedStatement ps = null;
@@ -62,8 +71,9 @@
                 tipoPropiedad = rs.getString("tipo_propiedad") != null ? rs.getString("tipo_propiedad") : "---";
                 inmobiliaria = rs.getString("inmobiliaria") != null ? rs.getString("inmobiliaria") : "---";
                 matricula = rs.getString("matricula_inmobiliaria");
+                idInmobProp = rs.getInt("id_inmobiliaria");
             } else {
-                response.sendRedirect("propiedades.jsp");
+                response.sendRedirect(request.getContextPath() + "/propiedades.jsp");
                 return;
             }
         } catch (Exception e) { } finally {
@@ -98,119 +108,104 @@
             if (ps != null) { try { ps.close(); } catch (SQLException e) { } }
         }
     }
+    
+    boolean esPropia = (idInmobiliariaUsuario != null && idInmobiliariaUsuario == idInmobProp);
+    boolean puedeEditar = esAdmin || (esInmob && esPropia);
+    boolean puedeEliminar = esAdmin || (esInmob && esPropia);
 %>
 
-    <!-- Barra de navegación -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
-        <div class="container">
-            <a class="navbar-brand" href="index.jsp">Inmobiliaria</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#barraNavegacion"
-                aria-controls="barraNavegacion" aria-expanded="false" aria-label="Alternar navegación">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="barraNavegacion">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.jsp">Inicio</a></li>
-                    <% if (esInmobiliaria) { %>
-                    <li class="nav-item active"><a class="nav-link" href="propiedades.jsp">Propiedades</a></li>
-                    <% } %>
-                    <li class="nav-item"><a class="nav-link" href="completar_registro.jsp">Mi perfil</a></li>
-                    <li class="nav-item"><a class="nav-link" href="cerrar_sesion.jsp">Cerrar Sesión</a></li>
-                </ul>
-            </div>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><%= titulo %></h2>
+        <div>
+            <% if (puedeEditar) { %>
+            <a href="<%= request.getContextPath() %>/propiedad_editar.jsp?id=<%= idPropiedad %>" class="btn btn-warning mr-2"><i class="fas fa-edit"></i> Editar</a>
+            <% } %>
+            <a href="<%= request.getContextPath() %>/propiedades.jsp" class="btn btn-secondary">Volver</a>
         </div>
-    </nav>
-
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2><%= titulo %></h2>
-            <div>
-                <a href="propiedad_editar.jsp?id=<%= idPropiedad %>" class="btn btn-warning mr-2"><i class="fas fa-edit"></i> Editar</a>
-                <a href="propiedades.jsp" class="btn btn-secondary">Volver</a>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6">
-                <% if (!imagenes.isEmpty()) { %>
-                <div id="carouselPropiedad" class="carousel slide" data-ride="carousel">
-                    <div class="carousel-inner">
-                        <% for (int i = 0; i < imagenes.size(); i++) { %>
-                        <div class="carousel-item <%= i == 0 ? "active" : "" %>">
-                            <img src="<%= imagenes.get(i) %>" class="d-block w-100" alt="Imagen <%= i + 1 %>" style="max-height: 400px; object-fit: cover;">
-                        </div>
-                        <% } %>
-                    </div>
-                    <% if (imagenes.size() > 1) { %>
-                    <a class="carousel-control-prev" href="#carouselPropiedad" role="button" data-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="sr-only">Anterior</span>
-                    </a>
-                    <a class="carousel-control-next" href="#carouselPropiedad" role="button" data-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="sr-only">Siguiente</span>
-                    </a>
-                    <% } %>
-                </div>
-                <% } else { %>
-                <div class="text-center text-muted py-5">Sin imágenes</div>
-                <% } %>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">Información</h5>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-borderless mb-0">
-                            <tr><th width="30%">Matrícula:</th><td><%= matricula %></td></tr>
-                            <tr><th>Tipo:</th><td><%= tipoOferta %></td></tr>
-                            <tr><th>Precio:</th><td class="text-success font-weight-bold h5">$<%= precio %></td></tr>
-                            <tr><th>Estado:</th><td>
-                                <span class="badge badge-<%= "DISPONIBLE".equals(estadoPublicacion) ? "success" : ("RESERVADO".equals(estadoPublicacion) ? "warning" : "secondary") %>">
-                                    <%= estadoPublicacion %>
-                                </span>
-                            </td></tr>
-                            <tr><th>Dirección:</th><td><%= direccion %></td></tr>
-                            <tr><th>Ciudad:</th><td><%= ciudad %></td></tr>
-                            <tr><th>Tipo Propiedad:</th><td><%= tipoPropiedad %></td></tr>
-                            <tr><th>Inmobiliaria:</th><td><%= inmobiliaria %></td></tr>
-                        </table>
-                    </div>
-                </div>
-
-                <% if (!descripcion.isEmpty()) { %>
-                <div class="card mt-3">
-                    <div class="card-header">Descripción</div>
-                    <div class="card-body">
-                        <p class="mb-0"><%= descripcion %></p>
-                    </div>
-                </div>
-                <% } %>
-            </div>
-        </div>
-
-        <% if (!caracteristicas.isEmpty()) { %>
-        <div class="card mt-4">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">Características</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <% for (java.util.Map.Entry<String, String> entry : caracteristicas.entrySet()) { %>
-                    <div class="col-md-4 mb-2">
-                        <strong><%= entry.getKey() %>:</strong> <%= entry.getValue() %>
-                    </div>
-                    <% } %>
-                </div>
-            </div>
-        </div>
-        <% } %>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+    <div class="row">
+        <div class="col-md-6">
+            <% if (!imagenes.isEmpty()) { %>
+            <div id="carouselPropiedad" class="carousel slide" data-ride="carousel">
+                <div class="carousel-inner">
+                    <% for (int i = 0; i < imagenes.size(); i++) { %>
+                    <div class="carousel-item <%= i == 0 ? "active" : "" %>">
+                        <img src="<%= request.getContextPath() %>/<%= imagenes.get(i) %>" class="d-block w-100" alt="Imagen <%= i + 1 %>" style="max-height: 400px; object-fit: cover;">
+                    </div>
+                    <% } %>
+                </div>
+                <% if (imagenes.size() > 1) { %>
+                <a class="carousel-control-prev" href="#carouselPropiedad" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Anterior</span>
+                </a>
+                <a class="carousel-control-next" href="#carouselPropiedad" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Siguiente</span>
+                </a>
+                <% } %>
+            </div>
+            <% } else { %>
+            <div class="text-center text-muted py-5">Sin imágenes</div>
+            <% } %>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Información</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr><th width="30%">Matrícula:</th><td><%= matricula %></td></tr>
+                        <tr><th>Tipo:</th><td><%= tipoOferta %></td></tr>
+                        <tr><th>Precio:</th><td class="text-success font-weight-bold h5">$<%= precio %></td></tr>
+                        <tr><th>Estado:</th><td>
+                            <span class="badge badge-<%= "DISPONIBLE".equals(estadoPublicacion) ? "success" : ("RESERVADO".equals(estadoPublicacion) ? "warning" : "secondary") %>">
+                                <%= estadoPublicacion %>
+                            </span>
+                        </td></tr>
+                        <tr><th>Dirección:</th><td><%= direccion %></td></tr>
+                        <tr><th>Ciudad:</th><td><%= ciudad %></td></tr>
+                        <tr><th>Tipo Propiedad:</th><td><%= tipoPropiedad %></td></tr>
+                        <tr><th>Inmobiliaria:</th><td><%= inmobiliaria %></td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <% if (!descripcion.isEmpty()) { %>
+            <div class="card mt-3">
+                <div class="card-header">Descripción</div>
+                <div class="card-body">
+                    <p class="mb-0"><%= descripcion %></p>
+                </div>
+            </div>
+            <% } %>
+        </div>
+    </div>
+
+    <% if (!caracteristicas.isEmpty()) { %>
+    <div class="card mt-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Características</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <% for (java.util.Map.Entry<String, String> entry : caracteristicas.entrySet()) { %>
+                <div class="col-md-4 mb-2">
+                    <strong><%= entry.getKey() %>:</strong> <%= entry.getValue() %>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
 <%
     if (conexion != null) {
         try { conexion.close(); } catch (SQLException e) { }
