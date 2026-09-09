@@ -10,6 +10,17 @@
 <%@ page import="java.io.OutputStream"%>
 <%@ page import="java.io.ByteArrayOutputStream"%>
 <%@ page import="java.nio.charset.StandardCharsets"%>
+<%@ include file="conexion.jspf" %>
+<%@ include file="auth.jspf" %>
+
+<%
+// Guardia: solo Inmobiliaria y Admin pueden crear propiedades
+if (!autenticado || (!esInmob && !esAdmin)) {
+    response.sendRedirect(request.getContextPath() + "/index.jsp");
+    return;
+}
+%>
+
 <!DOCTYPE html>
 <html lang="es">
 
@@ -25,18 +36,10 @@
 
 <body>
 
-<%@ include file="conexion.jspf" %>
+<!-- Navbar unificado -->
+<%@ include file="navbar.jspf" %>
 
 <%
-    Integer idUsuarioSesion = (Integer) session.getAttribute("id_usuario");
-    String rolSesion = (String) session.getAttribute("rol");
-    boolean esInmobiliaria = "inmobiliaria".equalsIgnoreCase(rolSesion);
-
-    if (idUsuarioSesion == null) {
-        response.sendRedirect("login.jsp");
-        return;
-    }
-
     String mensajeExito = null;
     String mensajeError = null;
 
@@ -158,6 +161,16 @@
                     }
                 }
 
+                // Para inmobiliaria: usar su inmobiliaria automáticamente
+                if (esInmob && idInmobiliariaUsuario != null) {
+                    idInmobiliaria = String.valueOf(idInmobiliariaUsuario);
+                }
+                
+                // Admin puede elegir inmobiliaria (validar que se envió)
+                if (esAdmin && idInmobiliaria.isEmpty()) {
+                    mensajeError = "Debe seleccionar una inmobiliaria.";
+                }
+
                 if (matricula.isEmpty() || titulo.isEmpty() || precio.isEmpty() || tipoOferta.isEmpty() || direccion.isEmpty() || idCiudad.isEmpty() || idTipoPropiedad.isEmpty() || idInmobiliaria.isEmpty()) {
                     mensajeError = "Todos los campos obligatorios deben estar completos.";
                 } else {
@@ -229,91 +242,70 @@
         }
 
         if (mensajeExito != null) {
-            response.sendRedirect("propiedades.jsp");
+            response.sendRedirect(request.getContextPath() + "/propiedades.jsp");
             return;
         }
     }
 %>
 
-    <!-- Barra de navegación -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
-        <div class="container">
-            <a class="navbar-brand" href="index.jsp">Inmobiliaria</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#barraNavegacion"
-                aria-controls="barraNavegacion" aria-expanded="false" aria-label="Alternar navegación">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="barraNavegacion">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.jsp">Inicio</a></li>
-                    <% if (esInmobiliaria) { %>
-                    <li class="nav-item active"><a class="nav-link" href="propiedades.jsp">Propiedades</a></li>
-                    <% } %>
-                    <li class="nav-item"><a class="nav-link" href="completar_registro.jsp">Mi perfil</a></li>
-                    <li class="nav-item"><a class="nav-link" href="cerrar_sesion.jsp">Cerrar Sesión</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Nueva Propiedad</h2>
+        <a href="<%= request.getContextPath() %>/propiedades.jsp" class="btn btn-secondary">Volver</a>
+    </div>
 
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>Nueva Propiedad</h2>
-            <a href="propiedades.jsp" class="btn btn-secondary">Volver</a>
-        </div>
+    <% if (mensajeError != null) { %>
+    <div class="alert alert-danger"><%= mensajeError %></div>
+    <% } %>
 
-        <% if (mensajeError != null) { %>
-        <div class="alert alert-danger"><%= mensajeError %></div>
-        <% } %>
-
-        <div class="card">
-            <div class="card-body">
-                <form action="propiedad_nueva.jsp" method="post" enctype="multipart/form-data">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label>Matrícula Inmobiliaria *</label>
-                            <input type="text" class="form-control" name="matricula" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label>Título *</label>
-                            <input type="text" class="form-control" name="titulo" required>
-                        </div>
+    <div class="card">
+        <div class="card-body">
+            <form action="<%= request.getContextPath() %>/propiedad_nueva.jsp" method="post" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Matrícula Inmobiliaria *</label>
+                        <input type="text" class="form-control" name="matricula" required>
                     </div>
-                    <div class="form-group mb-3">
-                        <label>Descripción</label>
-                        <textarea class="form-control" name="descripcion" rows="3"></textarea>
+                    <div class="col-md-6 mb-3">
+                        <label>Título *</label>
+                        <input type="text" class="form-control" name="titulo" required>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label>Precio *</label>
-                            <input type="number" step="0.01" class="form-control" name="precio" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Tipo de Oferta *</label>
-                            <select class="form-control" name="tipo_oferta" required>
-                                <option value="VENTA">Venta</option>
-                                <option value="ARRIENDO">Arriendo</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Estado</label>
-                            <select class="form-control" name="estado_publicacion">
-                                <option value="DISPONIBLE">Disponible</option>
-                                <option value="RESERVADO">Reservado</option>
-                                <option value="VENDIDO">Vendido</option>
-                                <option value="INACTIVO">Inactivo</option>
-                            </select>
-                        </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label>Descripción</label>
+                    <textarea class="form-control" name="descripcion" rows="3"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>Precio *</label>
+                        <input type="number" step="0.01" class="form-control" name="precio" required>
                     </div>
-                    <div class="form-group mb-3">
-                        <label>Dirección *</label>
-                        <input type="text" class="form-control" name="direccion" required>
+                    <div class="col-md-4 mb-3">
+                        <label>Tipo de Oferta *</label>
+                        <select class="form-control" name="tipo_oferta" required>
+                            <option value="VENTA">Venta</option>
+                            <option value="ARRIENDO">Arriendo</option>
+                        </select>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label>Ciudad *</label>
-                            <select class="form-control" name="id_ciudad" required>
-                                <option value="">Seleccione...</option>
+                    <div class="col-md-4 mb-3">
+                        <label>Estado</label>
+                        <select class="form-control" name="estado_publicacion">
+                            <option value="DISPONIBLE">Disponible</option>
+                            <option value="RESERVADO">Reservado</option>
+                            <option value="VENDIDO">Vendido</option>
+                            <option value="INACTIVO">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label>Dirección *</label>
+                    <input type="text" class="form-control" name="direccion" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>Ciudad *</label>
+                        <select class="form-control" name="id_ciudad" required>
+                            <option value="">Seleccione...</option>
 <%
     if (conexion != null) {
         PreparedStatement ps = null;
@@ -323,7 +315,7 @@
             rs = ps.executeQuery();
             while (rs.next()) {
 %>
-                                <option value="<%= rs.getInt("id_ciudad") %>"><%= rs.getString("nombre") %> (<%= rs.getString("departamento") %>)</option>
+                            <option value="<%= rs.getInt("id_ciudad") %>"><%= rs.getString("nombre") %> (<%= rs.getString("departamento") %>)</option>
 <%
             }
         } catch (Exception e) { } finally {
@@ -332,12 +324,12 @@
         }
     }
 %>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Tipo de Propiedad *</label>
-                            <select class="form-control" name="id_tipo_propiedad" required>
-                                <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Tipo de Propiedad *</label>
+                        <select class="form-control" name="id_tipo_propiedad" required>
+                            <option value="">Seleccione...</option>
 <%
     if (conexion != null) {
         PreparedStatement ps = null;
@@ -347,7 +339,7 @@
             rs = ps.executeQuery();
             while (rs.next()) {
 %>
-                                <option value="<%= rs.getInt("id_tipo_propiedad") %>"><%= rs.getString("nombre") %></option>
+                            <option value="<%= rs.getInt("id_tipo_propiedad") %>"><%= rs.getString("nombre") %></option>
 <%
             }
         } catch (Exception e) { } finally {
@@ -356,52 +348,65 @@
         }
     }
 %>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Inmobiliaria *</label>
-                            <select class="form-control" name="id_inmobiliaria" required>
-                                <option value="">Seleccione...</option>
-<%
-    if (conexion != null) {
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conexion.prepareStatement("SELECT id_inmobiliaria, nombre_comercial FROM inmobiliaria ORDER BY nombre_comercial");
-            rs = ps.executeQuery();
-            while (rs.next()) {
-%>
-                                <option value="<%= rs.getInt("id_inmobiliaria") %>"><%= rs.getString("nombre_comercial") %></option>
-<%
-            }
-        } catch (Exception e) { } finally {
-            if (rs != null) { try { rs.close(); } catch (SQLException e) { } }
-            if (ps != null) { try { ps.close(); } catch (SQLException e) { } }
-        }
-    }
-%>
-                            </select>
-                        </div>
+                        </select>
                     </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Inmobiliaria *</label>
+<%
+    if (esInmob && idInmobiliariaUsuario != null) {
+        // Inmobiliaria: campo oculto + texto informativo
+%>
+                        <input type="hidden" name="id_inmobiliaria" value="<%= idInmobiliariaUsuario %>">
+                        <select class="form-control" disabled>
+                            <option value="<%= idInmobiliariaUsuario %>" selected>Mi inmobiliaria (automático)</option>
+                        </select>
+<%
+    } else {
+        // Admin: dropdown para elegir
+%>
+                        <select class="form-control" name="id_inmobiliaria" required>
+                            <option value="">Seleccione...</option>
+<%
+        if (conexion != null) {
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+            try {
+                ps = conexion.prepareStatement("SELECT id_inmobiliaria, nombre_comercial FROM inmobiliaria ORDER BY nombre_comercial");
+                rs = ps.executeQuery();
+                while (rs.next()) {
+%>
+                            <option value="<%= rs.getInt("id_inmobiliaria") %>"><%= rs.getString("nombre_comercial") %></option>
+<%
+                }
+            } catch (Exception e) { } finally {
+                if (rs != null) { try { rs.close(); } catch (SQLException e) { } }
+                if (ps != null) { try { ps.close(); } catch (SQLException e) { } }
+            }
+        }
+    }
+%>
+                        </select>
+                    </div>
+                </div>
 
-                    <hr>
-                    <h5>Imágenes (máximo 5)</h5>
-                    <div class="row">
+                <hr>
+                <h5>Imágenes (máximo 5)</h5>
+                <div class="row">
 <%
     for (int i = 0; i < 5; i++) {
 %>
-                        <div class="col-md-4 mb-3">
-                            <label>Imagen <%= (i + 1) %> <%= i == 0 ? "(Principal)" : "" %></label>
-                            <input type="file" class="form-control-file" name="imagen_<%= i %>" accept="image/*">
-                        </div>
+                    <div class="col-md-4 mb-3">
+                        <label>Imagen <%= (i + 1) %> <%= i == 0 ? "(Principal)" : "" %></label>
+                        <input type="file" class="form-control-file" name="imagen_<%= i %>" accept="image/*">
+                    </div>
 <%
     }
 %>
-                    </div>
+                </div>
 
-                    <hr>
-                    <h5>Características</h5>
-                    <div class="row">
+                <hr>
+                <h5>Características</h5>
+                <div class="row">
 <%
     if (conexion != null) {
         PreparedStatement ps = null;
@@ -430,17 +435,17 @@
         }
     }
 %>
-                    </div>
+                </div>
 
-                    <button type="submit" class="btn btn-success btn-lg">Guardar Propiedad</button>
-                </form>
-            </div>
+                <button type="submit" class="btn btn-success btn-lg">Guardar Propiedad</button>
+            </form>
         </div>
     </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
 <%
     if (conexion != null) {
         try { conexion.close(); } catch (SQLException e) { }

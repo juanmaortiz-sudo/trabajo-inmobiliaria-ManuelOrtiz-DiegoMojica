@@ -20,6 +20,8 @@
 
 <body>
 
+<%@ include file="conexion.jspf" %>
+
 <%!
     private String hashSHA256(String dato) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -31,9 +33,6 @@
         return sb.toString();
     }
 %>
-
-<%-- Se incluye la lógica de conexión --%>
-<%@ include file="conexion.jspf" %>
 
 <%
     String correo = request.getParameter("correo");
@@ -81,7 +80,7 @@
                         sesion.setAttribute("correo", correo);
                         sesion.setAttribute("rol", rol);
 
-                        response.sendRedirect("index.jsp");
+                        response.sendRedirect(request.getContextPath() + "/index.jsp");
                         return;
                     }
                 }
@@ -110,28 +109,46 @@
     }
 %>
 
-    <div class="container">
-        <div class="jumbotron">
-            <h1>Iniciar Sesión</h1>
-        </div>
-        <form action="login.jsp" method="post">
-            <div class="form-group">
-                <p><label>Correo:</label></p>
-                <input type="email" class="form-control" id="correo" name="correo" required />
-                <br>
-                <p><label>Contraseña:</label></p>
-                <input type="password" class="form-control" id="contrasena" name="contrasena" required />
-                <br>
-                <input type="submit" class="btn btn-primary" value="Ingresar" />
-                <br><br>
-                <p><a href="registro.jsp">¿No tienes cuenta? Regístrate</a></p>
-            </div>
-        </form>
-    </div>
+<!DOCTYPE html>
+<html lang="es">
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Iniciar Sesión</title>
+</head>
+
+<body>
+
+<!-- Navbar unificado -->
+<%@ include file="navbar.jspf" %>
+
+<div class="container">
+    <div class="jumbotron">
+        <h1>Iniciar Sesión</h1>
+    </div>
+    <form action="<%= request.getContextPath() %>/login.jsp" method="post">
+        <div class="form-group">
+            <p><label>Correo:</label></p>
+            <input type="email" class="form-control" id="correo" name="correo" required />
+            <br>
+            <p><label>Contraseña:</label></p>
+            <input type="password" class="form-control" id="contrasena" name="contrasena" required />
+            <br>
+            <input type="submit" class="btn btn-primary" value="Ingresar" />
+            <br><br>
+            <p><a href="<%= request.getContextPath() %>/registro.jsp">¿No tienes cuenta? Regístrate</a></p>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
 <%
     if (conexion != null) {
         try { conexion.close(); } catch (SQLException e) { }

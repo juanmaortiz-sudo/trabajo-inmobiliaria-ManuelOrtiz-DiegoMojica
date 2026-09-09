@@ -6,20 +6,8 @@
 <%@ page import="java.sql.SQLException"%>
 <%@ page import="java.security.MessageDigest"%>
 <%@ page import="java.nio.charset.StandardCharsets"%>
-<!DOCTYPE html>
-<html lang="es">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/style.css">
-    <title>Registro de Usuario</title>
-</head>
-
-<body>
+<%@ include file="conexion.jspf" %>
+<%@ include file="auth.jspf" %>
 
 <%!
     private String hashSHA256(String dato) throws Exception {
@@ -32,9 +20,6 @@
         return sb.toString();
     }
 %>
-
-<%-- Se incluye la lógica de conexión --%>
-<%@ include file="conexion.jspf" %>
 
 <%
     String correo = request.getParameter("correo");
@@ -96,9 +81,9 @@
                 sesion.setAttribute("rol", nombreRol);
 
                 if ("cliente".equalsIgnoreCase(nombreRol)) {
-                    response.sendRedirect("completar_registro.jsp");
+                    response.sendRedirect(request.getContextPath() + "/completar_registro.jsp");
                 } else {
-                    response.sendRedirect("index.jsp");
+                    response.sendRedirect(request.getContextPath() + "/index.jsp");
                 }
                 return;
 
@@ -135,31 +120,50 @@
     }
 %>
 
-    <div class="container">
-        <div class="jumbotron">
-            <h1>Registro de Usuario</h1>
-        </div>
-        <form action="registro.jsp" method="post">
-            <div class="form-group">
-                <p><label>Correo:</label></p>
-                <input type="email" class="form-control" id="correo" name="correo" required />
-                <br>
-                <p><label>Contraseña:</label></p>
-                <input type="password" class="form-control" id="contrasena" name="contrasena" required />
-                <br>
-                <p><label>Confirmar Contraseña:</label></p>
-                <input type="password" class="form-control" id="confirmar" name="confirmar" required />
-                <br>
-                <p><label>Rol:</label></p>
-                <select class="form-control" id="id_rol" name="id_rol" required>
-                    <option value="">Seleccione un rol</option>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Registro de Usuario</title>
+</head>
+
+<body>
+
+<!-- Navbar unificado -->
+<%@ include file="navbar.jspf" %>
+
+<div class="container">
+    <div class="jumbotron">
+        <h1>Registro de Usuario</h1>
+        <p class="lead">¿Quieres ser inmobiliaria? <a href="<%= request.getContextPath() %>/solicitar_inmobiliaria.jsp">Envía una solicitud</a> para que el administrador la revise.</p>
+    </div>
+    <form action="<%= request.getContextPath() %>/registro.jsp" method="post">
+        <div class="form-group">
+            <p><label>Correo:</label></p>
+            <input type="email" class="form-control" id="correo" name="correo" required />
+            <br>
+            <p><label>Contraseña:</label></p>
+            <input type="password" class="form-control" id="contrasena" name="contrasena" required />
+            <br>
+            <p><label>Confirmar Contraseña:</label></p>
+            <input type="password" class="form-control" id="confirmar" name="confirmar" required />
+            <br>
+            <p><label>Rol:</label></p>
+            <select class="form-control" id="id_rol" name="id_rol" required>
+                <option value="">Seleccione un rol</option>
 <%
                 if (conexion != null) {
                     Statement stmtRoles = null;
                     ResultSet rsRoles = null;
                     try {
                         stmtRoles = conexion.createStatement();
-                        rsRoles = stmtRoles.executeQuery("SELECT id_rol, nombre FROM rol WHERE LOWER(nombre) NOT IN ('administrador', 'visitante')");
+                        rsRoles = stmtRoles.executeQuery("SELECT id_rol, nombre FROM rol WHERE LOWER(nombre) = 'cliente'");
                         while (rsRoles.next()) {
                             out.println("<option value='" + rsRoles.getInt("id_rol") + "'>" + rsRoles.getString("nombre") + "</option>");
                         }
@@ -172,21 +176,22 @@
                 } else {
                     out.println("<option value=''>No hay conexión</option>");
                 }
-
-                if (conexion != null) {
-                    try { conexion.close(); } catch (SQLException e) { }
-                }
 %>
-                </select>
-                <br>
-                <input type="submit" class="btn btn-primary" value="Registrar" />
-            </div>
-        </form>
-    </div>
+            </select>
+            <br>
+            <input type="submit" class="btn btn-primary" value="Registrar como Cliente" />
+        </div>
+    </form>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+<%
+    if (conexion != null) {
+        try { conexion.close(); } catch (SQLException e) { }
+    }
+%>
 </body>
 
 </html>
