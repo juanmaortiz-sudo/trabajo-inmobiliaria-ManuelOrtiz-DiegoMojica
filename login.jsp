@@ -34,6 +34,7 @@
 
 <%-- Se incluye la lógica de conexión --%>
 <%@ include file="conexion.jspf" %>
+<%@ include file="funciones.jspf" %>
 
 <%
     String correo = request.getParameter("correo");
@@ -52,16 +53,19 @@
             rsUsuario = sentenciaUsuario.executeQuery();
 
             if (!rsUsuario.next()) {
+                registrarAuditoria(conexion, null, "INTENTO_LOGIN_FALLIDO", "usuario", "correo=" + correo + ", motivo=usuario_no_encontrado");
                 out.println("<div class='container'><div class='alert alert-danger'>Usuario no encontrado.</div></div>");
             } else {
                 String estado = rsUsuario.getString("estado");
                 if (!"ACTIVO".equals(estado)) {
+                    registrarAuditoria(conexion, rsUsuario.getInt("id_usuario"), "INTENTO_LOGIN_FALLIDO", "usuario", "correo=" + correo + ", motivo=estado_" + estado);
                     out.println("<div class='container'><div class='alert alert-warning'>Cuenta inactiva o bloqueada.</div></div>");
                 } else {
                     String hashAlmacenado = rsUsuario.getString("contrasena");
                     String hashIngresado = hashSHA256(contrasena);
 
                     if (!hashAlmacenado.equals(hashIngresado)) {
+                        registrarAuditoria(conexion, rsUsuario.getInt("id_usuario"), "INTENTO_LOGIN_FALLIDO", "usuario", "correo=" + correo + ", motivo=contrasena_incorrecta");
                         out.println("<div class='container'><div class='alert alert-danger'>Contraseña incorrecta.</div></div>");
                     } else {
                         int idUsuario = rsUsuario.getInt("id_usuario");
@@ -80,6 +84,8 @@
                         sesion.setAttribute("id_usuario", Integer.valueOf(idUsuario));
                         sesion.setAttribute("correo", correo);
                         sesion.setAttribute("rol", rol);
+
+                        registrarAuditoria(conexion, Integer.valueOf(idUsuario), "INICIO_SESION", "usuario", "correo=" + correo + ", rol=" + rol);
 
                         response.sendRedirect("index.jsp");
                         return;
@@ -109,6 +115,11 @@
         }
     }
 %>
+
+    <%
+    request.setAttribute("seccionActiva", "inicio");
+%>
+<%@ include file="navbar.jspf" %>
 
     <div class="container">
         <div class="jumbotron">

@@ -1,0 +1,50 @@
+<%!
+    private String _activa(String seccion, String actual) {
+        return actual != null && actual.equals(seccion) ? "active" : "";
+    }
+%>
+<%
+    Integer _idUsuarioNav = (Integer) session.getAttribute("id_usuario");
+    String _rolNav = (String) session.getAttribute("rol");
+    boolean _esClienteNav = "cliente".equalsIgnoreCase(_rolNav);
+    boolean _esInmobiliariaNav = "inmobiliaria".equalsIgnoreCase(_rolNav);
+    boolean _esAdministradorNav = "admin".equalsIgnoreCase(_rolNav) || "administrador".equalsIgnoreCase(_rolNav);
+
+    String _seccionActiva = (String) request.getAttribute("seccionActiva");
+    if (_seccionActiva == null) _seccionActiva = "";
+%>
+<nav class="navbar navbar-expand-lg navbar-dark bg-success">
+    <div class="container">
+        <a class="navbar-brand" href="index.jsp">Inmobiliaria</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#barraNavegacion"
+            aria-controls="barraNavegacion" aria-expanded="false" aria-label="Alternar navegación">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="barraNavegacion">
+            <ul class="navbar-nav ml-auto">
+<%          if (_idUsuarioNav != null) { %>
+                <li class="nav-item <%= _activa("inicio", _seccionActiva) %>"><a class="nav-link" href="index.jsp">Inicio</a></li>
+                <li class="nav-item <%= _activa("propiedades", _seccionActiva) %>"><a class="nav-link" href="propiedades.jsp">Propiedades</a></li>
+<%              if (_esClienteNav) { %>
+                <li class="nav-item <%= _activa("favoritos", _seccionActiva) %>"><a class="nav-link" href="favoritos.jsp">Mis Favoritos</a></li>
+<%              } %>
+<%              if (_esClienteNav || _esInmobiliariaNav || _esAdministradorNav) { %>
+                <li class="nav-item <%= _activa("citas", _seccionActiva) %>"><a class="nav-link" href="citas.jsp">Citas</a></li>
+                <li class="nav-item <%= _activa("solicitudes", _seccionActiva) %>"><a class="nav-link" href="solicitudes.jsp">Solicitudes</a></li>
+<%              } %>
+<%              if (_esAdministradorNav) { %>
+                <li class="nav-item <%= _activa("roles", _seccionActiva) %>"><a class="nav-link" href="roles.jsp">Usuarios y Roles</a></li>
+                <li class="nav-item <%= _activa("reportes", _seccionActiva) %>"><a class="nav-link" href="reporte_propiedades.jsp">Reportes</a></li>
+                <li class="nav-item <%= _activa("auditoria", _seccionActiva) %>"><a class="nav-link" href="auditoria.jsp">Auditoría</a></li>
+<%              } %>
+                <li class="nav-item <%= _activa("perfil", _seccionActiva) %>"><a class="nav-link" href="completar_registro.jsp">Mi perfil</a></li>
+                <li class="nav-item"><a class="nav-link" href="cerrar_sesion.jsp">Cerrar Sesión</a></li>
+<%          } else { %>
+                <li class="nav-item <%= _activa("inicio", _seccionActiva) %>"><a class="nav-link" href="index.jsp">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="login.jsp">Iniciar Sesión</a></li>
+                <li class="nav-item"><a class="btn btn-light btn-sm ml-2 my-1" href="registro.jsp">Registrarse</a></li>
+<%          } %>
+            </ul>
+        </div>
+    </div>
+</nav>

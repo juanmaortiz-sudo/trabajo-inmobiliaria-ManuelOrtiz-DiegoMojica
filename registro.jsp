@@ -35,6 +35,7 @@
 
 <%-- Se incluye la lógica de conexión --%>
 <%@ include file="conexion.jspf" %>
+<%@ include file="funciones.jspf" %>
 
 <%
     String correo = request.getParameter("correo");
@@ -90,6 +91,8 @@
 
                 conexion.commit();
 
+                registrarAuditoria(conexion, Integer.valueOf(idUsuario), "REGISTRO_USUARIO", "usuario", "correo=" + correo + ", rol=" + nombreRol);
+
                 HttpSession sesion = request.getSession();
                 sesion.setAttribute("id_usuario", Integer.valueOf(idUsuario));
                 sesion.setAttribute("correo", correo);
@@ -135,6 +138,11 @@
     }
 %>
 
+    <%
+    request.setAttribute("seccionActiva", "inicio");
+%>
+<%@ include file="navbar.jspf" %>
+
     <div class="container">
         <div class="jumbotron">
             <h1>Registro de Usuario</h1>
@@ -159,7 +167,7 @@
                     ResultSet rsRoles = null;
                     try {
                         stmtRoles = conexion.createStatement();
-                        rsRoles = stmtRoles.executeQuery("SELECT id_rol, nombre FROM rol WHERE LOWER(nombre) <> 'administrador'");
+                        rsRoles = stmtRoles.executeQuery("SELECT id_rol, nombre FROM rol WHERE LOWER(nombre) NOT IN ('administrador', 'admin', 'visitante')");
                         while (rsRoles.next()) {
                             out.println("<option value='" + rsRoles.getInt("id_rol") + "'>" + rsRoles.getString("nombre") + "</option>");
                         }

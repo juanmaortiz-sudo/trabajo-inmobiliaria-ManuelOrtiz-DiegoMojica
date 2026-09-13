@@ -1,0 +1,40 @@
+<%@ page import="java.sql.Connection"%>
+<%@ page import="java.sql.PreparedStatement"%>
+<%@ page import="java.sql.ResultSet"%>
+<%@ page import="java.sql.SQLException"%>
+<%@ page import="java.sql.Types"%>
+<%@ page import="java.util.UUID"%>
+<%!
+    /**
+     * Inserta un registro en la tabla auditoria. Nunca lanza excepciones para
+     * no interrumpir la operación principal.
+     */
+    private void registrarAuditoria(Connection conexion, Integer idUsuario, String accion, String tablaAfectada, String detalles) {
+        if (conexion == null) return;
+        PreparedStatement ps = null;
+        try {
+            ps = conexion.prepareStatement("INSERT INTO auditoria (id_usuario, accion, tabla_afectada, detalles) VALUES (?, ?, ?, ?)");
+            if (idUsuario != null) {
+                ps.setInt(1, idUsuario);
+            } else {
+                ps.setNull(1, Types.INTEGER);
+            }
+            ps.setString(2, accion);
+            ps.setString(3, tablaAfectada);
+            ps.setString(4, detalles != null ? detalles : "");
+            ps.executeUpdate();
+        } catch (Exception e) {
+            // La auditoría no debe romper la operación principal.
+        } finally {
+            if (ps != null) {
+                try { ps.close(); } catch (SQLException e) { }
+            }
+        }
+    }
+
+    private String escaparHtml(String texto) {
+        if (texto == null) return "";
+        return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                    .replace("\"", "&quot;").replace("'", "&#39;");
+    }
+%>

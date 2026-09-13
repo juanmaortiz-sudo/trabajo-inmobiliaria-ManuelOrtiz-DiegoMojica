@@ -26,6 +26,7 @@
 
 <%-- Se incluye la lógica de conexión --%>
 <%@ include file="conexion.jspf" %>
+<%@ include file="funciones.jspf" %>
 
 <%
     Integer idUsuario = (Integer) session.getAttribute("id_usuario");
@@ -172,6 +173,8 @@
                 sentencia.setString(11, urlFoto);
                 sentencia.executeUpdate();
 
+                registrarAuditoria(conexion, idUsuario, "ACTUALIZA_PERFIL", "perfil", "documento=" + documento + ", telefono=" + telefono);
+
                 response.sendRedirect("index.jsp");
                 return;
             }
@@ -251,6 +254,11 @@
         return -1;
     }
 %>
+
+    <%
+    request.setAttribute("seccionActiva", "perfil");
+%>
+<%@ include file="navbar.jspf" %>
 
     <div class="container">
         <div class="jumbotron">
